@@ -5,6 +5,19 @@ on:
   pull_request:
 
 jobs:
+  cli:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: install pinned generators
+        run: npm ci --ignore-scripts
+      - name: end-to-end generation and drift check
+        run: npm test
+
   proto:
     runs-on: ubuntu-latest
     steps:
@@ -28,12 +41,14 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
+          cache: npm
+      - run: npm ci --ignore-scripts
       - name: validate OpenAPI specs
         run: |
           for f in $(find openapi -name openapi.yaml); do
             echo "validating $f"
-            npx --yes @redocly/cli@1.25.11 lint "$f"
+            ./node_modules/.bin/redocly lint "$f"
           done
 
   frontend-config-schema:
@@ -42,6 +57,8 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
+          cache: npm
+      - run: npm ci --ignore-scripts
       - name: validate frontend-config schema is valid JSON Schema
-        run: npx --yes ajv-cli@5.0.0 compile -s schema/frontend-config.schema.json
+        run: ./node_modules/.bin/ajv compile -s schema/frontend-config.schema.json

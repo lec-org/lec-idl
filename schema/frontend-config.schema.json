@@ -21,17 +21,12 @@
       "type": "object",
       "description": "键为本地服务别名，值为 'lec.<space>@<ref>'，ref 可为分支/tag/commit。",
       "minProperties": 1,
+      "propertyNames": {
+        "pattern": "^[a-z][a-z0-9_-]*$"
+      },
       "additionalProperties": {
         "type": "string",
-        "pattern": "^lec\\.[a-z]+@[^\\s]+$"
-      }
-    },
-    "generate": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "int64": { "type": "string", "enum": ["string", "bigint", "number"], "default": "string" },
-        "client": { "type": "string", "enum": ["fetch", "none"], "default": "fetch" }
+        "pattern": "^lec\\.[a-z]+@([A-Za-z0-9][A-Za-z0-9._/-]*|[0-9a-f]{40})$"
       }
     }
   }

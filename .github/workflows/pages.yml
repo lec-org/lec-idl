@@ -20,7 +20,9 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
+          cache: npm
+      - run: npm ci --ignore-scripts
       - name: build static Redoc docs
         run: |
           mkdir -p site
@@ -39,7 +41,7 @@ jobs:
             [ -f "$spec" ] || continue
             mkdir -p "site/$space/v1"
             # 静态 Redoc，不启用在线调试
-            npx --yes @redocly/cli@1.25.11 build-docs "$spec" -o "site/$space/v1/index.html"
+            ./node_modules/.bin/redocly build-docs "$spec" -o "site/$space/v1/index.html"
           done
       - uses: actions/upload-pages-artifact@v3
         with:

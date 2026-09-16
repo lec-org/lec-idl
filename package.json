@@ -1,0 +1,30 @@
+{
+  "name": "@lec/idl-cli",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Pull pinned Lec IDL data and generate local TypeScript contracts without executing remote scripts.",
+  "license": "MIT",
+  "bin": {
+    "idl": "cli/idl.js"
+  },
+  "files": [
+    "cli/idl.js",
+    "cli/README.md"
+  ],
+  "scripts": {
+    "test": "node cli/test.js"
+  },
+  "dependencies": {
+    "@bufbuild/buf": "1.47.2",
+    "@bufbuild/protobuf": "2.2.3",
+    "@bufbuild/protoc-gen-es": "2.2.3",
+    "openapi-typescript": "7.6.1"
+  },
+  "devDependencies": {
+    "@redocly/cli": "1.25.11",
+    "ajv-cli": "5.0.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
