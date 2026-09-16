@@ -1,0 +1,47 @@
+name: contracts
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+
+jobs:
+  proto:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: bufbuild/buf-setup-action@v1
+        with:
+          version: 1.47.2
+      - name: buf lint
+        run: buf lint
+      - name: buf build
+        run: buf build
+      - name: buf breaking (against main)
+        if: github.event_name == 'pull_request'
+        run: buf breaking --against "https://github.com/${{ github.repository }}.git#branch=main"
+
+  openapi:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: validate OpenAPI specs
+        run: |
+          for f in $(find openapi -name openapi.yaml); do
+            echo "validating $f"
+            npx --yes @redocly/cli@1.25.11 lint "$f"
+          done
+
+  frontend-config-schema:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: validate frontend-config schema is valid JSON Schema
+        run: npx --yes ajv-cli@5.0.0 compile -s schema/frontend-config.schema.json

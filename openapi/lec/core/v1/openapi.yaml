@@ -1,0 +1,145 @@
+openapi: 3.1.0
+info:
+  title: Lec Core Internal HTTP API
+  version: 1.0.0
+  license:
+    name: MIT
+    identifier: MIT
+  description: >
+    Lec Core 面向服务的内部 HTTP API（授权 PDP 与资源生命周期）。
+    目标/待实现：Core 尚未提供这些路由；本文档为契约先行。
+    授权唯一真源为 Core，结果不明一律 fail closed。
+servers:
+  - url: http://127.0.0.1:8081/api/v1
+    description: 本地开发
+paths:
+  /internal/doc-authorize:
+    post:
+      operationId: docAuthorize
+      summary: 单资源授权判定
+      security:
+        - lecDocServiceBearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthorizeRequest"
+      responses:
+        "200":
+          description: 判定结果（allowed 可能为 false）
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthorizeResponse"
+        "401":
+          description: service bearer 无效
+  /internal/doc-authorize-batch:
+    post:
+      operationId: docAuthorizeBatch
+      summary: 批量授权判定（一一对应，任何不匹配整批 fail closed）
+      security:
+        - lecDocServiceBearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthorizeBatchRequest"
+      responses:
+        "200":
+          description: 逐项判定结果
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthorizeBatchResponse"
+        "401":
+          description: service bearer 无效
+components:
+  securitySchemes:
+    lecDocServiceBearer:
+      type: http
+      scheme: bearer
+      description: Lec Doc scoped service token（只证明调用方，不替用户授权）
+  schemas:
+    Principal:
+      type: object
+      required: [type]
+      properties:
+        type:
+          type: string
+          enum: [OIDC, ANONYMOUS]
+        issuer:
+          type: string
+        subject:
+          type: string
+    AuthorizeRequest:
+      type: object
+      required: [request_id, workspace_id, resource_kind, resource_id, capability, principal]
+      properties:
+        request_id: { type: string }
+        workspace_id: { type: string }
+        resource_kind:
+          type: string
+          enum: [DOCMOST_SPACE, DOCMOST_PAGE]
+        resource_id: { type: string }
+        capability:
+          type: string
+          enum: [VIEW, COMMENT, EDIT, DELETE, CREATE, CLASSIFY, TRANSFER_OWNER, MANAGE_GRANTS, REVIEW_ACCESS_REQUEST, RESTORE]
+        principal:
+          $ref: "#/components/schemas/Principal"
+    AuthorizeResponse:
+      type: object
+      required: [request_id, allowed, reason_code]
+      properties:
+        request_id: { type: string }
+        allowed: { type: boolean }
+        reason_code: { type: string }
+        organization_id: { type: string }
+        resource_version: { type: integer, format: int64 }
+    AuthorizeBatchItem:
+      type: object
+      required: [item_id, resource_kind, resource_id, capability]
+      properties:
+        item_id: { type: string }
+        resource_kind:
+          type: string
+          enum: [DOCMOST_SPACE, DOCMOST_PAGE]
+        resource_id: { type: string }
+        capability:
+          type: string
+          enum: [VIEW, COMMENT, EDIT, DELETE, CREATE, CLASSIFY, TRANSFER_OWNER, MANAGE_GRANTS, REVIEW_ACCESS_REQUEST, RESTORE]
+    AuthorizeBatchRequest:
+      type: object
+      required: [request_id, workspace_id, principal, items]
+      properties:
+        request_id: { type: string }
+        workspace_id: { type: string }
+        principal:
+          $ref: "#/components/schemas/Principal"
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/AuthorizeBatchItem"
+    AuthorizeBatchResult:
+      type: object
+      required: [item_id, resource_kind, resource_id, capability, workspace_id, allowed, reason_code]
+      properties:
+        item_id: { type: string }
+        resource_kind: { type: string }
+        resource_id: { type: string }
+        capability: { type: string }
+        workspace_id: { type: string }
+        organization_id: { type: string }
+        resource_version: { type: integer, format: int64 }
+        allowed: { type: boolean }
+        reason_code: { type: string }
+    AuthorizeBatchResponse:
+      type: object
+      required: [request_id, results]
+      properties:
+        request_id: { type: string }
+        results:
+          type: array
+          items:
+            $ref: "#/components/schemas/AuthorizeBatchResult"

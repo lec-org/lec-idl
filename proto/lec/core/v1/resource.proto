@@ -1,0 +1,81 @@
+// Lec Core 资源注册与生命周期契约。
+// 对应 docs/architecture/lec-doc-v1-technical-design.md §6.1 / §6.5。
+// 目标/待实现：尚未有服务实现或消费本契约。
+syntax = "proto3";
+
+package lec.core.v1;
+
+import "lec/core/v1/common.proto";
+
+// 通用资源生命周期：预留 → 激活 → 删除/恢复。
+// 控制面调用同时携带用户 principal 与 service credential；service bearer 只证明调用方身份，不替用户授权。
+service ResourceService {
+  // 预分配资源（默认 L5），返回 registration key。UUID 在写入下游前预分配。
+  rpc ReserveResource(ReserveResourceRequest) returns (ReserveResourceResponse);
+  // 激活已预留资源。
+  rpc ActivateResource(ActivateResourceRequest) returns (ActivateResourceResponse);
+  // 标记删除（幂等）。
+  rpc DeleteResource(DeleteResourceRequest) returns (DeleteResourceResponse);
+  // 查询已注册资源的规范信息。
+  rpc GetResource(GetResourceRequest) returns (GetResourceResponse);
+}
+
+message ResourceRef {
+  ResourceKind resource_kind = 1;
+  string external_id = 2;        // 下游 UUID（如 Docmost space/page）
+  string workspace_id = 3;
+  string organization_id = 4;
+  string parent_resource_id = 5; // 可指向 SPACE 或父 PAGE
+  string owner_user_id = 6;
+  Classification classification = 7; // 仅 PAGE
+  ResourceStatus status = 8;
+  uint64 version = 9;
+}
+
+message ReserveResourceRequest {
+  string request_id = 1;
+  ResourceKind resource_kind = 2;
+  string external_id = 3;
+  string workspace_id = 4;
+  string parent_resource_id = 5;
+  string owner_user_id = 6;
+  Principal principal = 7; // 发起用户
+}
+
+message ReserveResourceResponse {
+  string registration_key = 1;
+  ResourceRef resource = 2;
+}
+
+message ActivateResourceRequest {
+  string request_id = 1;
+  string registration_key = 2;
+  Principal principal = 3;
+}
+
+message ActivateResourceResponse {
+  ResourceRef resource = 1;
+}
+
+message DeleteResourceRequest {
+  string request_id = 1;
+  ResourceKind resource_kind = 2;
+  string resource_id = 3;
+  string workspace_id = 4;
+  Principal principal = 5;
+}
+
+message DeleteResourceResponse {
+  ResourceRef resource = 1;
+}
+
+message GetResourceRequest {
+  ResourceKind resource_kind = 1;
+  string resource_id = 2;
+  string workspace_id = 3;
+}
+
+message GetResourceResponse {
+  bool found = 1;
+  ResourceRef resource = 2;
+}

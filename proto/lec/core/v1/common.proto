@@ -1,0 +1,57 @@
+// Lec 平台共享枚举与基础类型。
+// 目标/待实现：本契约尚未被任何服务生成或消费，仅作为 lec-idl 契约仓的最小起点。
+syntax = "proto3";
+
+package lec.core.v1;
+
+// 资源分类密级（DOCMOST_PAGE 使用；容器不强制）。
+enum Classification {
+  CLASSIFICATION_UNSPECIFIED = 0;
+  CLASSIFICATION_L1 = 1;
+  CLASSIFICATION_L2 = 2;
+  CLASSIFICATION_L3 = 3;
+  CLASSIFICATION_L4 = 4;
+  CLASSIFICATION_L5 = 5;
+}
+
+// 已注册资源生命周期状态。
+enum ResourceStatus {
+  RESOURCE_STATUS_UNSPECIFIED = 0;
+  RESOURCE_STATUS_RESERVED = 1;
+  RESOURCE_STATUS_ACTIVE = 2;
+  RESOURCE_STATUS_DELETED = 3;
+}
+
+// 资源种类。首批仅文档域，后续 OJ/论坛按域扩展。
+enum ResourceKind {
+  RESOURCE_KIND_UNSPECIFIED = 0;
+  RESOURCE_KIND_DOCMOST_SPACE = 1;
+  RESOURCE_KIND_DOCMOST_PAGE = 2;
+}
+
+// 能力（读 + 控制面）。VIEW/COMMENT/EDIT/DELETE 独立建模，不可归并。
+enum Capability {
+  CAPABILITY_UNSPECIFIED = 0;
+  CAPABILITY_VIEW = 1;
+  CAPABILITY_COMMENT = 2;
+  CAPABILITY_EDIT = 3;
+  CAPABILITY_DELETE = 4;
+  CAPABILITY_CREATE = 5;
+  CAPABILITY_CLASSIFY = 6;
+  CAPABILITY_TRANSFER_OWNER = 7;
+  CAPABILITY_MANAGE_GRANTS = 8;
+  CAPABILITY_REVIEW_ACCESS_REQUEST = 9;
+  CAPABILITY_RESTORE = 10;
+}
+
+// 授权主体。匿名请求必须显式使用 ANONYMOUS，禁止伪造空 subject。
+message Principal {
+  enum Type {
+    TYPE_UNSPECIFIED = 0;
+    TYPE_OIDC = 1;
+    TYPE_ANONYMOUS = 2;
+  }
+  Type type = 1;
+  string issuer = 2;   // OIDC 时必填
+  string subject = 3;  // OIDC 时必填
+}

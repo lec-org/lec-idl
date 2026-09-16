@@ -1,0 +1,57 @@
+// Lec SSO Adapter：Keycloak 内部管理门面（不 fork Keycloak）。
+// 表达 Lec 业务意图，内部调用 Keycloak Admin REST；不做原样透传，不承载 OIDC 登录（登录走标准 HTTP）。
+// 对应 docs/architecture/platform-services-and-rpc.md §3.2。
+// 目标/待实现：尚未有服务实现或消费本契约。
+syntax = "proto3";
+
+package lec.identity.v1;
+
+service IdentityAdminService {
+  // 停用用户（阻止后续登录）。
+  rpc DisableUser(DisableUserRequest) returns (DisableUserResponse);
+  // 撤销用户全部会话。
+  rpc RevokeSessions(RevokeSessionsRequest) returns (RevokeSessionsResponse);
+  // 要求用户在下次登录完成某动作（如改密、验证邮箱）。
+  rpc RequireAction(RequireActionRequest) returns (RequireActionResponse);
+  // 读取身份规范信息（用于 Core 对账）。
+  rpc GetIdentity(GetIdentityRequest) returns (GetIdentityResponse);
+}
+
+message DisableUserRequest {
+  string request_id = 1;
+  string issuer = 2;
+  string subject = 3;
+}
+message DisableUserResponse {
+  bool disabled = 1;
+}
+
+message RevokeSessionsRequest {
+  string request_id = 1;
+  string issuer = 2;
+  string subject = 3;
+}
+message RevokeSessionsResponse {
+  uint32 revoked_count = 1;
+}
+
+message RequireActionRequest {
+  string request_id = 1;
+  string issuer = 2;
+  string subject = 3;
+  repeated string actions = 4; // 如 UPDATE_PASSWORD / VERIFY_EMAIL
+}
+message RequireActionResponse {
+  bool applied = 1;
+}
+
+message GetIdentityRequest {
+  string issuer = 1;
+  string subject = 2;
+}
+message GetIdentityResponse {
+  bool found = 1;
+  bool enabled = 2;
+  string email = 3;
+  bool email_verified = 4;
+}

@@ -1,0 +1,8 @@
+# buf 代码生成模板（消费方参考）。
+# 生成器版本固定，不执行远端脚本。前端 TS 用 protoc-gen-es；Go 服务在各自仓用 protoc-gen-go/go-grpc 或 go-zero goctl。
+version: v2
+plugins:
+  - remote: buf.build/bufbuild/es:v2.2.3
+    out: gen/ts
+    opt:
+      - target=ts

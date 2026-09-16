@@ -1,0 +1,107 @@
+// Lec Core 授权 PDP（Policy Decision Point）契约。
+// 唯一授权真源；结果不明一律 fail closed。对应 docs/architecture/lec-doc-v1-technical-design.md §6。
+// 目标/待实现：尚未有服务实现或消费本契约。
+syntax = "proto3";
+
+package lec.core.v1;
+
+import "lec/core/v1/common.proto";
+
+// PDP：回答"这个 principal 此刻能不能对该资源做该能力"。
+// 无正向跨请求缓存；Core 不可用、资源状态不明、批量不完整时消费者必须 fail closed。
+service AuthorizationService {
+  // 单资源判定。organization_id 不由客户端传入，Core 通过
+  // workspace_id + resource_kind + resource_id 反查已注册资源并回填规范值。
+  rpc Authorize(AuthorizeRequest) returns (AuthorizeResponse);
+
+  // 批量判定。请求项与响应项必须一一对应；任何缺项、重复项或额外项使整个 batch fail closed。
+  rpc AuthorizeBatch(AuthorizeBatchRequest) returns (AuthorizeBatchResponse);
+
+  // 身份解析：(issuer, subject) → Lec 用户。仅确认身份，不代表任何业务授权。
+  rpc ResolveIdentity(ResolveIdentityRequest) returns (ResolveIdentityResponse);
+
+  // 成员资格查询：用户在某组织的 Membership 状态与角色。
+  rpc GetMembership(GetMembershipRequest) returns (GetMembershipResponse);
+}
+
+message AuthorizeRequest {
+  string request_id = 1;
+  string workspace_id = 2;
+  ResourceKind resource_kind = 3;
+  string resource_id = 4;
+  Capability capability = 5;
+  Principal principal = 6;
+}
+
+message AuthorizeResponse {
+  string request_id = 1;
+  bool allowed = 2;
+  // 机器可读的拒绝/允许原因码（如 ALLOW / RESOURCE_NOT_FOUND / MEMBERSHIP_INACTIVE / ...）。
+  string reason_code = 3;
+  string organization_id = 4;   // Core 回填的规范组织
+  uint64 resource_version = 5;  // 判定时的资源版本
+}
+
+message AuthorizeBatchRequest {
+  string request_id = 1;
+  string workspace_id = 2;
+  Principal principal = 3;
+  repeated AuthorizeBatchItem items = 4;
+}
+
+message AuthorizeBatchItem {
+  string item_id = 1;
+  ResourceKind resource_kind = 2;
+  string resource_id = 3;
+  Capability capability = 4;
+}
+
+message AuthorizeBatchResponse {
+  string request_id = 1;
+  repeated AuthorizeBatchResult results = 2;
+}
+
+message AuthorizeBatchResult {
+  string item_id = 1;
+  ResourceKind resource_kind = 2;
+  string resource_id = 3;
+  Capability capability = 4;
+  string workspace_id = 5;
+  string organization_id = 6;
+  uint64 resource_version = 7;
+  bool allowed = 8;
+  string reason_code = 9;
+}
+
+message ResolveIdentityRequest {
+  string issuer = 1;
+  string subject = 2;
+}
+
+message ResolveIdentityResponse {
+  bool found = 1;
+  string user_id = 2;
+  bool active = 3;
+}
+
+message GetMembershipRequest {
+  string user_id = 1;
+  string organization_id = 2;
+}
+
+message GetMembershipResponse {
+  enum MembershipStatus {
+    MEMBERSHIP_STATUS_UNSPECIFIED = 0;
+    MEMBERSHIP_STATUS_ACTIVE = 1;
+    MEMBERSHIP_STATUS_INACTIVE = 2;
+    MEMBERSHIP_STATUS_NONE = 3;
+  }
+  enum Role {
+    ROLE_UNSPECIFIED = 0;
+    ROLE_MEMBER = 1;
+    ROLE_ADMIN = 2;
+    ROLE_OWNER = 3;
+  }
+  MembershipStatus status = 1;
+  Role role = 2;
+}

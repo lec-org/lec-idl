@@ -1,0 +1,38 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://raw.githubusercontent.com/lec-org/lec-idl/main/schema/frontend-config.schema.json",
+  "title": "Lec IDL frontend generation config",
+  "description": "前端仓库的 idl.config.json 配置。npm run idl 依据本配置显式拉取 service@ref 并生成类型；不在 postinstall 联网，远端分支只作数据源，绝不执行其携带的脚本。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["outDir", "services"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "outDir": {
+      "type": "string",
+      "description": "生成物输出目录（禁止手改，纳入 VCS 由 CI 校验漂移）。"
+    },
+    "repo": {
+      "type": "string",
+      "description": "IDL 仓库（默认 lec-org/lec-idl）。",
+      "default": "lec-org/lec-idl"
+    },
+    "services": {
+      "type": "object",
+      "description": "键为本地服务别名，值为 'lec.<space>@<ref>'，ref 可为分支/tag/commit。",
+      "minProperties": 1,
+      "additionalProperties": {
+        "type": "string",
+        "pattern": "^lec\\.[a-z]+@[^\\s]+$"
+      }
+    },
+    "generate": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "int64": { "type": "string", "enum": ["string", "bigint", "number"], "default": "string" },
+        "client": { "type": "string", "enum": ["fetch", "none"], "default": "fetch" }
+      }
+    }
+  }
+}

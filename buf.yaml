@@ -1,0 +1,10 @@
+version: v2
+modules:
+  - path: proto
+lint:
+  use:
+    - STANDARD
+  # 服务名以 Service 结尾等标准规则；允许 v1 包后缀。
+breaking:
+  use:
+    - FILE

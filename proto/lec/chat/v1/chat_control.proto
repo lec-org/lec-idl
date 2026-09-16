@@ -1,0 +1,78 @@
+// LecIM 对平台暴露的 Chat 控制契约（防腐层）。
+// 其他服务只看到 Lec 语义；OpenIM admin token / shared secret / role level / 内部拓扑不外泄。
+// 对应 docs/architecture/platform-services-and-rpc.md §3.3。
+// 目标/待实现：尚未有服务实现或消费本契约。
+syntax = "proto3";
+
+package lec.chat.v1;
+
+service ChatControlService {
+  // 幂等确保 Lec 用户在 IM 侧存在。
+  rpc EnsureUser(EnsureUserRequest) returns (EnsureUserResponse);
+  // 幂等确保组织主群存在。
+  rpc EnsureOrganizationGroup(EnsureOrganizationGroupRequest) returns (EnsureOrganizationGroupResponse);
+  // 按 Core roster 对账群成员（新增/移除）。
+  rpc ReconcileGroupMembers(ReconcileGroupMembersRequest) returns (ReconcileGroupMembersResponse);
+  // 为当前用户签发短期 IM 会话。
+  rpc IssueUserSession(IssueUserSessionRequest) returns (IssueUserSessionResponse);
+  // 撤销用户会话 / 强制下线。
+  rpc RevokeUserSession(RevokeUserSessionRequest) returns (RevokeUserSessionResponse);
+  // 发送系统通知消息。
+  rpc SendSystemMessage(SendSystemMessageRequest) returns (SendSystemMessageResponse);
+}
+
+message EnsureUserRequest {
+  string request_id = 1;
+  string user_id = 2;         // Lec 用户 ID
+  string display_name = 3;
+}
+message EnsureUserResponse {
+  bool created = 1;
+}
+
+message EnsureOrganizationGroupRequest {
+  string request_id = 1;
+  string organization_id = 2;
+  string group_name = 3;
+}
+message EnsureOrganizationGroupResponse {
+  string group_id = 1;
+  bool created = 2;
+}
+
+message ReconcileGroupMembersRequest {
+  string request_id = 1;
+  string organization_id = 2;
+  repeated string member_user_ids = 3; // 期望的完整 ACTIVE 成员集合
+}
+message ReconcileGroupMembersResponse {
+  repeated string added_user_ids = 1;
+  repeated string removed_user_ids = 2;
+}
+
+message IssueUserSessionRequest {
+  string request_id = 1;
+  string user_id = 2;
+}
+message IssueUserSessionResponse {
+  string session_token = 1;
+  int64 expires_at = 2; // Unix 秒
+}
+
+message RevokeUserSessionRequest {
+  string request_id = 1;
+  string user_id = 2;
+}
+message RevokeUserSessionResponse {
+  bool revoked = 1;
+}
+
+message SendSystemMessageRequest {
+  string request_id = 1;
+  string organization_id = 2; // 目标组织主群
+  string content = 3;
+  string event_id = 4;        // 幂等去重
+}
+message SendSystemMessageResponse {
+  bool delivered = 1;
+}

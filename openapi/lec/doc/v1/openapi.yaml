@@ -1,0 +1,39 @@
+openapi: 3.1.0
+info:
+  title: Lec Doc Web/Service HTTP API
+  version: 1.0.0
+  license:
+    name: MIT
+    identifier: MIT
+  description: >
+    Lec Doc 面向浏览器/Desktop 的 HTTP API 契约（首批最小面）。
+    目标/待实现：Lec Doc Core PDP 接入未完成前，受保护入口保持 fail closed。
+    Lec Doc 本地 ACL 不得作为 allow fallback；授权唯一真源为 Lec Core。
+servers:
+  - url: http://127.0.0.1:8090/api
+    description: 本地开发
+paths:
+  /health:
+    get:
+      operationId: docHealth
+      summary: 存活探针
+      security: []  # 公开探针，无需鉴权
+      responses:
+        "200":
+          description: 服务存活
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status]
+                properties:
+                  status:
+                    type: string
+                    enum: [ok]
+components:
+  securitySchemes:
+    lecDocSession:
+      type: apiKey
+      in: cookie
+      name: lec_doc_session
+      description: subject-bound handoff 建立的 Cookie session

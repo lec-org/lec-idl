@@ -1,0 +1,64 @@
+// Kafka 事件契约：统一 envelope + 首批生命周期事件。
+// 事件不回答实时授权，只负责最终收敛。对应 docs/architecture/platform-services-and-rpc.md §7。
+// 目标/待实现：尚未有服务发布或消费本契约。
+syntax = "proto3";
+
+package lec.events.v1;
+
+import "google/protobuf/timestamp.proto";
+
+// 所有事件的统一信封。消费者用 event_id 去重，用 aggregate_version 拒绝旧事件覆盖新状态。
+message EventEnvelope {
+  string event_id = 1;                       // 全局唯一，消费者幂等去重
+  string event_type = 2;                     // 如 membership.deactivated.v1
+  string aggregate_type = 3;                 // 如 membership
+  string aggregate_id = 4;                   // partition key
+  uint64 aggregate_version = 5;              // 单调递增
+  google.protobuf.Timestamp occurred_at = 6;
+  string producer = 7;                       // 发布方服务名
+  string trace_id = 8;
+  bytes payload = 9;                         // 对应事件消息序列化后的字节
+}
+
+// --- 用户生命周期 (topic: lec.identity.v1) ---
+
+message UserDeactivated {
+  string user_id = 1;
+  string reason_code = 2;
+}
+
+message UserReactivated {
+  string user_id = 1;
+}
+
+// --- 组织生命周期 (topic: lec.organization.v1) ---
+
+message OrganizationEmailServiceDisabled {
+  string organization_id = 1;
+}
+
+message OrganizationDeactivated {
+  string organization_id = 1;
+}
+
+// --- 成员关系生命周期 (topic: lec.membership.v1) ---
+
+message MembershipDeactivated {
+  string user_id = 1;
+  string organization_id = 2;
+  string reason_code = 3;
+}
+
+message MembershipActivated {
+  string user_id = 1;
+  string organization_id = 2;
+  // 角色作为字符串保持事件与 gRPC 枚举解耦（MEMBER/ADMIN/OWNER）。
+  string role = 3;
+}
+
+message MembershipRoleChanged {
+  string user_id = 1;
+  string organization_id = 2;
+  string previous_role = 3;
+  string new_role = 4;
+}

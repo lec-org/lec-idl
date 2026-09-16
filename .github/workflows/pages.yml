@@ -1,0 +1,56 @@
+name: pages
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: build static Redoc docs
+        run: |
+          mkdir -p site
+          # 首页索引
+          cat > site/index.html <<'HTML'
+          <!doctype html><meta charset="utf-8"><title>Lec IDL</title>
+          <h1>Lec IDL</h1>
+          <ul>
+            <li><a href="core/v1/">lec.core v1 (HTTP)</a></li>
+            <li><a href="doc/v1/">lec.doc v1 (HTTP)</a></li>
+          </ul>
+          <p>gRPC/事件契约见仓库 proto/ 目录。</p>
+          HTML
+          for space in core doc; do
+            spec="openapi/lec/$space/v1/openapi.yaml"
+            [ -f "$spec" ] || continue
+            mkdir -p "site/$space/v1"
+            # 静态 Redoc，不启用在线调试
+            npx --yes @redocly/cli@1.25.11 build-docs "$spec" -o "site/$space/v1/index.html"
+          done
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
