@@ -10,7 +10,7 @@ Lec 平台的接口契约单一真源（Interface Definition Language）。用 *
 proto/lec/            # 内部 gRPC 与事件契约（Protobuf）
 ├── core/v1/          # 授权 PDP、身份解析、成员资格、资源生命周期
 ├── chat/v1/          # LecIM 对外 Chat 控制契约（防腐层）
-├── identity/v1/      # Lec SSO Adapter（Keycloak 管理门面）
+├── identity/v1/      # Lec SSO Adapter（Logto 管理门面）
 ├── doc/v1/           # Doc 业务命名空间（阶段 A 无虚构 RPC）
 └── events/v1/        # Kafka EventEnvelope 与生命周期事件
 openapi/lec/          # 浏览器/Desktop 的 HTTP API

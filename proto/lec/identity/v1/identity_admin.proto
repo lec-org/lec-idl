@@ -1,5 +1,5 @@
-// Lec SSO Adapter：Keycloak 内部管理门面（不 fork Keycloak）。
-// 表达 Lec 业务意图，内部调用 Keycloak Admin REST；不做原样透传，不承载 OIDC 登录（登录走标准 HTTP）。
+// Lec SSO Adapter：Logto 内部管理门面。
+// 表达 Lec 业务意图，内部调用 Logto Management API；不做原样透传，不承载 OIDC 登录（登录走标准 HTTP）。
 // 对应 docs/architecture/platform-services-and-rpc.md §3.2。
 // 目标/待实现：尚未有服务实现或消费本契约。
 syntax = "proto3";
@@ -11,7 +11,7 @@ service IdentityAdminService {
   rpc DisableUser(DisableUserRequest) returns (DisableUserResponse);
   // 撤销用户全部会话。
   rpc RevokeSessions(RevokeSessionsRequest) returns (RevokeSessionsResponse);
-  // 要求用户在下次登录完成某动作（如改密、验证邮箱）。
+  // 请求提供方支持的账号安全动作；实现必须显式映射 Logto 能力，不得透传旧提供方 action 名。
   rpc RequireAction(RequireActionRequest) returns (RequireActionResponse);
   // 读取身份规范信息（用于 Core 对账）。
   rpc GetIdentity(GetIdentityRequest) returns (GetIdentityResponse);
